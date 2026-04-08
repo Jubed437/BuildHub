@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Runtime and logs
+logs/
+*.log
+
+# Environment/secrets
+.env
+.env.*
+!.env.example
+
+# Build output and temp
+dist/
+build/
+tmp/
+.cache/
+
+# Optional local database files
+*.sqlite
+*.sqlite3
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
