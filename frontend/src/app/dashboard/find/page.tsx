@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import Link from 'next/link';
 
 export default function FindPeoplePage() {
@@ -16,7 +16,7 @@ export default function FindPeoplePage() {
     setLoading(true);
     setSearched(true);
     try {
-      const res = await axios.get(`http://localhost:5000/api/users/search?q=${encodeURIComponent(query)}`);
+      const res = await api.get(`/api/users/search?q=${encodeURIComponent(query)}`);
       setResults(res.data);
     } catch (err) {
       console.error(err);
@@ -33,7 +33,7 @@ export default function FindPeoplePage() {
     setLoading(true);
     setSearched(true);
     try {
-      const res = await axios.get(`http://localhost:5000/api/users/search?q=${encodeURIComponent(val)}`);
+      const res = await api.get(`/api/users/search?q=${encodeURIComponent(val)}`);
       setResults(res.data);
     } catch (err) {
       console.error(err);

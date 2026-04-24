@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 
 export default function MyProjectsPage() {
   const { user, token } = useAuthStore();
@@ -18,14 +19,23 @@ export default function MyProjectsPage() {
 
   const fetchMyProjects = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/users/profile/${user?.id}`, {
-        headers: { 'x-auth-token': token }
-      });
+      const res = await api.get(`/api/users/profile/${user?.id}`);
       setActiveProjects(res.data.activeProjects);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    if (!confirm('Delete this project? This cannot be undone.')) return;
+    try {
+      await api.delete(`/api/projects/${projectId}`);
+      setActiveProjects(prev => prev.filter(p => p._id !== projectId));
+      toast.success('Project deleted');
+    } catch (err: any) {
+      toast.error(err.response?.data?.msg || 'Error deleting project');
     }
   };
 
@@ -58,9 +68,12 @@ export default function MyProjectsPage() {
             
             <div className="pt-6 border-t border-surface-container-highest flex justify-between items-center mt-auto">
               {project.creator._id === user?.id ? (
-                <Link href={`/dashboard/projects/${project._id}/workspace`}>
-                  <button className="text-sm font-bold text-primary hover:underline">Manage Workspace &rarr;</button>
-                </Link>
+                <div className="flex items-center gap-3">
+                  <Link href={`/dashboard/projects/${project._id}/workspace`}>
+                    <button className="text-sm font-bold text-primary hover:underline">Manage Workspace &rarr;</button>
+                  </Link>
+                  <button onClick={() => handleDeleteProject(project._id)} className="text-sm font-bold text-red-400 hover:text-red-600 transition-colors">Delete</button>
+                </div>
               ) : (
                 <Link href={`/dashboard/projects/${project._id}/workspace`}>
                   <button className="text-sm font-bold text-secondary hover:underline">Go to Workspace &rarr;</button>

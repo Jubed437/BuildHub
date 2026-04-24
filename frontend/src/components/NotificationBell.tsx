@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -15,7 +15,7 @@ export default function NotificationBell() {
 
   const fetchNotifications = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/notifications');
+      const res = await api.get('/api/notifications');
       setNotifications(res.data);
     } catch (err) {
       console.error(err);
@@ -40,14 +40,14 @@ export default function NotificationBell() {
 
   const markAllRead = async () => {
     try {
-      await axios.patch('http://localhost:5000/api/notifications/read-all');
+      await api.patch('/api/notifications/read-all');
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     } catch (err) { console.error(err); }
   };
 
   const markRead = async (id: string) => {
     try {
-      await axios.patch(`http://localhost:5000/api/notifications/${id}/read`);
+      await api.patch(`/api/notifications/${id}/read`);
       setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
     } catch (err) { console.error(err); }
   };

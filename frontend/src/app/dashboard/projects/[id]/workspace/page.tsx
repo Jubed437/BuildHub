@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
@@ -22,7 +22,7 @@ export default function WorkspacePage() {
 
   const fetchWorkspace = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/projects/${id}/workspace`, {
+      const res = await api.get(`/api/projects/${id}/workspace`, {
         headers: { 'x-auth-token': token }
       });
       setWorkspace(res.data);
@@ -36,7 +36,7 @@ export default function WorkspacePage() {
 
   const handleApplication = async (appId: string, status: string) => {
     try {
-      await axios.post(`http://localhost:5000/api/projects/${id}/applications/${appId}/status`, { status }, {
+      await api.post(`/api/projects/${id}/applications/${appId}/status`, { status }, {
         headers: { 'x-auth-token': token }
       });
       toast.success(`Application ${status}`);
@@ -51,7 +51,7 @@ export default function WorkspacePage() {
     if (!newTaskTitle) return;
     
     try {
-      await axios.post(`http://localhost:5000/api/projects/${id}/tasks`, {
+      await api.post(`/api/projects/${id}/tasks`, {
         title: newTaskTitle,
         tag: newTaskTag || 'GENERAL'
       }, {
@@ -68,7 +68,7 @@ export default function WorkspacePage() {
 
   const updateTaskStatus = async (taskId: string, status: string) => {
     try {
-      await axios.put(`http://localhost:5000/api/projects/${id}/tasks/${taskId}`, { status }, {
+      await api.put(`/api/projects/${id}/tasks/${taskId}`, { status }, {
         headers: { 'x-auth-token': token }
       });
       fetchWorkspace();

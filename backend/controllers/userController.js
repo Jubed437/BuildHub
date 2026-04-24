@@ -1,15 +1,16 @@
 const User = require('../models/User');
 const Project = require('../models/Project');
 
-const getActorId = async (req) => {
-    if (req.user && req.user.id) return req.user.id;
-    const guest = await User.findOne().sort({ createdAt: 1 }).select('_id name skills avatar role contributions links bio');
-    return guest ? guest : null;
+const getActorUser = async (req) => {
+    if (req.user && req.user.id) {
+        return await User.findById(req.user.id).select('_id name skills avatar role contributions links bio');
+    }
+    return null;
 };
 
 exports.getCurrentUser = async (req, res) => {
     try {
-        const user = await getActorId(req);
+        const user = await getActorUser(req);
         if (!user) return res.status(404).json({ msg: 'No user found' });
         res.json(user);
     } catch (err) {
@@ -44,6 +45,10 @@ exports.getUserProfile = async (req, res) => {
 
 exports.updateUserProfile = async (req, res) => {
     try {
+        if (req.user.id.toString() !== req.params.id.toString()) {
+            return res.status(403).json({ msg: 'You can only update your own profile' });
+        }
+
         const { bio, skills, links, avatar } = req.body;
         
         let user = await User.findById(req.params.id);
@@ -65,6 +70,7 @@ exports.updateUserProfile = async (req, res) => {
         res.json(user);
     } catch (err) {
         console.error(err.message);
+        if (err.kind === 'ObjectId') return res.status(404).json({ msg: 'User not found' });
         res.status(500).send('Server Error');
     }
 };
@@ -90,7 +96,7 @@ exports.searchUsers = async (req, res) => {
 
 exports.getRecommendations = async (req, res) => {
     try {
-        const currentUser = await getActorId(req);
+        const currentUser = await getActorUser(req);
         // Find all other users
         let query = {};
         if (currentUser) query._id = { $ne: currentUser._id };

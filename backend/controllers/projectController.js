@@ -3,11 +3,9 @@ const User = require('../models/User');
 const Task = require('../models/Task');
 const Notification = require('../models/Notification');
 
-// Helper: resolve the acting user (from auth middleware OR first DB user as guest)
-const getActorId = async (req) => {
+const getActorId = (req) => {
     if (req.user && req.user.id) return req.user.id;
-    const guest = await User.findOne().sort({ createdAt: 1 }).select('_id');
-    return guest ? guest._id.toString() : null;
+    return null;
 };
 
 exports.getProjects = async (req, res) => {
@@ -26,16 +24,16 @@ exports.getProjects = async (req, res) => {
 
 exports.getMyActiveProjects = async (req, res) => {
     try {
-        const actorId = await getActorId(req);
+        const actorId = getActorId(req);
         if (!actorId) return res.status(401).json({ msg: 'Unauthorized' });
-        
+
         const projects = await Project.find({
             $or: [
                 { creator: actorId },
                 { 'teamMembers.user': actorId }
             ]
         }).select('_id title description creator teamMembers').populate('creator', 'name avatar').populate('teamMembers.user', 'name avatar');
-        
+
         res.json(projects);
     } catch (err) {
         console.error(err.message);
@@ -46,7 +44,8 @@ exports.getMyActiveProjects = async (req, res) => {
 exports.createProject = async (req, res) => {
     try {
         const { title, description, requiredSkills, teamSize, milestones } = req.body;
-        const actorId = await getActorId(req);
+        const actorId = getActorId(req);
+        if (!actorId) return res.status(401).json({ msg: 'Unauthorized' });
         const newProject = new Project({
             title, description, requiredSkills, teamSize,
             creator: actorId,
@@ -75,9 +74,47 @@ exports.getProjectById = async (req, res) => {
     }
 };
 
+exports.updateProject = async (req, res) => {
+    try {
+        const actorId = getActorId(req);
+        if (!actorId) return res.status(401).json({ msg: 'Unauthorized' });
+        const project = await Project.findById(req.params.id);
+        if (!project) return res.status(404).json({ msg: 'Project not found' });
+        if (project.creator.toString() !== actorId) return res.status(403).json({ msg: 'Not authorized' });
+        const { title, description, requiredSkills, teamSize, status } = req.body;
+        if (title) project.title = title;
+        if (description) project.description = description;
+        if (requiredSkills) project.requiredSkills = requiredSkills;
+        if (teamSize) project.teamSize = teamSize;
+        if (status) project.status = status;
+        await project.save();
+        res.json(project);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+};
+
+exports.deleteProject = async (req, res) => {
+    try {
+        const actorId = getActorId(req);
+        if (!actorId) return res.status(401).json({ msg: 'Unauthorized' });
+        const project = await Project.findById(req.params.id);
+        if (!project) return res.status(404).json({ msg: 'Project not found' });
+        if (project.creator.toString() !== actorId) return res.status(403).json({ msg: 'Not authorized' });
+        await Task.deleteMany({ project: project._id });
+        await project.deleteOne();
+        res.json({ msg: 'Project deleted' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+};
+
 exports.applyToProject = async (req, res) => {
     try {
-        const actorId = await getActorId(req);
+        const actorId = getActorId(req);
+        if (!actorId) return res.status(401).json({ msg: 'Unauthorized' });
         const project = await Project.findById(req.params.id);
         if (!project) return res.status(404).json({ msg: 'Project not found' });
         if (project.creator.toString() === actorId)
@@ -88,7 +125,6 @@ exports.applyToProject = async (req, res) => {
         project.applications.push({ user: actorId });
         await project.save();
 
-        // Notify project creator
         const applicant = await User.findById(actorId).select('name');
         await Notification.create({
             recipient: project.creator,
@@ -123,7 +159,6 @@ exports.updateApplicationStatus = async (req, res) => {
         }
         await project.save();
 
-        // Notify the applicant of the decision
         const notifType = status === 'accepted' ? 'application_accepted' : 'application_rejected';
         const notifMsg = status === 'accepted'
             ? `Your application to "${project.title}" was accepted! 🎉`
@@ -145,8 +180,8 @@ exports.updateApplicationStatus = async (req, res) => {
 exports.getWorkspace = async (req, res) => {
     try {
         const project = await Project.findById(req.params.id)
-            .populate('creator', 'name')
-            .populate('teamMembers.user', 'name')
+            .populate('creator', 'name contributions')
+            .populate('teamMembers.user', 'name contributions')
             .populate('applications.user', 'name skills');
         if (!project) return res.status(404).json({ msg: 'Project not found' });
         const tasks = await Task.find({ project: project._id }).populate('assignedTo', 'name');
@@ -160,14 +195,14 @@ exports.getWorkspace = async (req, res) => {
 exports.createTask = async (req, res) => {
     try {
         const { title, tag } = req.body;
-        const actorId = await getActorId(req);
+        const actorId = getActorId(req);
+        if (!actorId) return res.status(401).json({ msg: 'Unauthorized' });
         const project = await Project.findById(req.params.id);
 
         const newTask = new Task({ title, tag, project: req.params.id, assignedTo: actorId });
         await newTask.save();
         await newTask.populate('assignedTo', 'name');
 
-        // Notify all team members (except the creator of the task)
         if (project) {
             const recipients = [
                 project.creator,
@@ -175,15 +210,14 @@ exports.createTask = async (req, res) => {
             ].filter(uid => uid.toString() !== actorId.toString());
 
             const uniqueRecipients = [...new Set(recipients.map(r => r.toString()))];
-            const notifPromises = uniqueRecipients.map(uid =>
+            await Promise.all(uniqueRecipients.map(uid =>
                 Notification.create({
                     recipient: uid,
                     type: 'new_task',
                     message: `New task added to "${project.title}": ${title}`,
                     project: project._id
                 })
-            );
-            await Promise.all(notifPromises);
+            ));
         }
 
         res.json(newTask);
@@ -198,28 +232,21 @@ exports.updateTaskStatus = async (req, res) => {
         const { status } = req.body;
         const task = await Task.findById(req.params.taskId).populate('assignedTo', 'name');
         if (!task) return res.status(404).json({ msg: 'Task not found' });
-        
-        // If task is completed and wasn't before
+
         if (status === 'done' && task.status !== 'done') {
             const project = await Project.findById(task.project);
-            if (project) {
-                // Award points to Global User Contributions
-                if (task.assignedTo) {
-                    await User.findByIdAndUpdate(task.assignedTo._id, { $inc: { contributions: 10 } });
-                    
-                    // Award points to specific Project Member Score
-                    const memberIndex = project.teamMembers.findIndex(m => m.user.toString() === task.assignedTo._id.toString());
-                    if (memberIndex !== -1) {
-                        project.teamMembers[memberIndex].projectScore = (project.teamMembers[memberIndex].projectScore || 0) + 10;
-                    } else if (project.creator.toString() === task.assignedTo._id.toString()) {
-                        // If creator completes it, maybe update creator's score? 
-                        // We can add the creator mathematically as a member in the frontend, but here let's just ignore if they aren't in teamMembers array
-                    }
-                    await project.save();
+            if (project && task.assignedTo) {
+                await User.findByIdAndUpdate(task.assignedTo._id, { $inc: { contributions: 10 } });
+                const memberIndex = project.teamMembers.findIndex(m => m.user.toString() === task.assignedTo._id.toString());
+                if (memberIndex !== -1) {
+                    project.teamMembers[memberIndex].projectScore = (project.teamMembers[memberIndex].projectScore || 0) + 10;
+                } else if (project.creator.toString() === task.assignedTo._id.toString()) {
+                    // creator score tracked globally via contributions above
                 }
+                await project.save();
             }
         }
-        
+
         task.status = status;
         await task.save();
         res.json(task);
@@ -229,24 +256,36 @@ exports.updateTaskStatus = async (req, res) => {
     }
 };
 
+exports.deleteTask = async (req, res) => {
+    try {
+        const task = await Task.findById(req.params.taskId);
+        if (!task) return res.status(404).json({ msg: 'Task not found' });
+        await task.deleteOne();
+        res.json({ msg: 'Task deleted' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+};
+
 exports.toggleMilestoneStatus = async (req, res) => {
     try {
+        const actorId = getActorId(req);
+        if (!actorId) return res.status(401).json({ msg: 'Unauthorized' });
         const project = await Project.findById(req.params.id);
         if (!project) return res.status(404).json({ msg: 'Project not found' });
-        
+
         const milestone = project.milestones.id(req.params.milestoneId);
         if (!milestone) return res.status(404).json({ msg: 'Milestone not found' });
-        
+
         milestone.status = milestone.status === 'completed' ? 'pending' : 'completed';
-        
-        // Award points if completed
+
         if (milestone.status === 'completed') {
-            const actorId = await getActorId(req);
             await User.findByIdAndUpdate(actorId, { $inc: { contributions: 20 } });
             const memberIndex = project.teamMembers.findIndex(m => m.user.toString() === actorId.toString());
             if (memberIndex !== -1) project.teamMembers[memberIndex].projectScore = (project.teamMembers[memberIndex].projectScore || 0) + 20;
         }
-        
+
         await project.save();
         res.json(project.milestones);
     } catch (err) {

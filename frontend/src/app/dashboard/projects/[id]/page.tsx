@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -22,7 +22,7 @@ export default function ProjectDetailsPage() {
 
   const fetchProject = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/projects/${id}`);
+      const res = await api.get(`/api/projects/${id}`);
       setProject(res.data);
       
       if (user) {
@@ -40,7 +40,7 @@ export default function ProjectDetailsPage() {
 
   const handleApply = async () => {
     try {
-      await axios.post(`http://localhost:5000/api/projects/${id}/apply`, {}, {
+      await api.post(`/api/projects/${id}/apply`, {}, {
         headers: { 'x-auth-token': token }
       });
       toast.success('Successfully applied to project!');

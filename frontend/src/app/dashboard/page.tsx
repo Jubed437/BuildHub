@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import Link from 'next/link';
 import RecommendationsMarquee from '@/components/RecommendationsMarquee';
 
@@ -15,7 +15,7 @@ export default function DashboardPage() {
 
   const fetchProjects = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/projects');
+      const res = await api.get('/api/projects');
       setProjects(res.data);
     } catch (err) {
       console.error(err);

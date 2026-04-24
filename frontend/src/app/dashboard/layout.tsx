@@ -5,20 +5,47 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import NotificationBell from '@/components/NotificationBell';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { logout } = useAuthStore();
+  const { token, logout, updateUser } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
   const [activeUser, setActiveUser] = useState<any>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
-    // Fetch the mocked active user (since auth is disabled)
-    axios.get('http://localhost:5000/api/users/me')
-      .then(res => setActiveUser(res.data))
-      .catch(console.error);
-  }, []);
+    const validateSession = async () => {
+      if (!token) {
+        router.replace('/login');
+        setIsCheckingAuth(false);
+        return;
+      }
+
+      try {
+        const res = await api.get('/api/auth/me');
+        setActiveUser(res.data);
+        updateUser({
+          id: res.data._id,
+          name: res.data.name,
+          email: res.data.email,
+          skills: res.data.skills || [],
+        });
+      } catch (error) {
+        console.error(error);
+        logout();
+        router.replace('/login');
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    validateSession();
+  }, [token, router, logout, updateUser]);
+
+  if (isCheckingAuth) {
+    return <div className="min-h-screen flex items-center justify-center text-on-surface-variant">Checking session...</div>;
+  }
 
   return (
     <div className="bg-background font-sans text-on-surface min-h-screen flex">

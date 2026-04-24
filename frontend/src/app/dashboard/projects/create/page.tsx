@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
@@ -39,7 +39,7 @@ export default function CreateProjectPage() {
         milestones: validMilestones
       };
 
-      await axios.post('http://localhost:5000/api/projects', payload, {
+      await api.post('/api/projects', payload, {
         headers: { 'x-auth-token': token }
       });
       

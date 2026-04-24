@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import Link from 'next/link';
 
 export default function LeaderboardPage() {
@@ -14,7 +14,7 @@ export default function LeaderboardPage() {
 
   const fetchLeaderboard = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/users/leaderboard');
+      const res = await api.get('/api/users/leaderboard');
       setLeaders(res.data);
     } catch (err) {
       console.error(err);

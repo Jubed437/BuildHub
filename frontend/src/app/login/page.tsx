@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 import Link from 'next/link';
 import { toast, Toaster } from 'react-hot-toast';
@@ -16,7 +16,7 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      const res = await api.post('/api/auth/login', { email, password });
       login(res.data.user, res.data.token);
       toast.success('Logged in successfully');
       router.push('/dashboard');
@@ -27,7 +27,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface-container-lowest p-6">
-      <Toaster />
       <div className="w-full max-w-md bg-surface p-10 rounded-xl shadow-sm border border-surface-container-high relative overflow-hidden">
         
         {/* Soft terracotta glow accent */}

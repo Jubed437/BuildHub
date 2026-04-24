@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 import Link from 'next/link';
 
@@ -16,8 +16,8 @@ export default function WorkspacePage() {
   useEffect(() => {
     // Fetch user and their active projects
     Promise.all([
-      axios.get('http://localhost:5000/api/users/me'),
-      axios.get('http://localhost:5000/api/projects/my/active')
+      api.get('/api/users/me'),
+      api.get('/api/projects/my/active')
     ]).then(([meRes, projRes]) => {
       setActiveUser(meRes.data);
       setActiveProjects(projRes.data);
@@ -32,7 +32,7 @@ export default function WorkspacePage() {
   const selectProject = async (id: string) => {
     setLoading(true);
     try {
-      const res = await axios.get(`http://localhost:5000/api/projects/${id}/workspace`);
+      const res = await api.get(`/api/projects/${id}/workspace`);
       setSelectedProject(res.data.project);
       setTasks(res.data.tasks);
     } catch (err) {
@@ -46,7 +46,7 @@ export default function WorkspacePage() {
     e.preventDefault();
     if (!newTaskTitle.trim() || !selectedProject) return;
     try {
-      const res = await axios.post(`http://localhost:5000/api/projects/${selectedProject._id}/tasks`, {
+      const res = await api.post(`/api/projects/${selectedProject._id}/tasks`, {
         title: newTaskTitle,
         tag: 'Development'
       });
@@ -59,8 +59,17 @@ export default function WorkspacePage() {
 
   const updateTaskStatus = async (taskId: string, status: string) => {
     try {
-      const res = await axios.put(`http://localhost:5000/api/projects/${selectedProject._id}/tasks/${taskId}`, { status });
+      const res = await api.put(`/api/projects/${selectedProject._id}/tasks/${taskId}`, { status });
       setTasks(tasks.map(t => t._id === taskId ? res.data : t));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const deleteTask = async (taskId: string) => {
+    try {
+      await api.delete(`/api/projects/${selectedProject._id}/tasks/${taskId}`);
+      setTasks(tasks.filter(t => t._id !== taskId));
     } catch (err) {
       console.error(err);
     }
@@ -68,7 +77,7 @@ export default function WorkspacePage() {
 
   const toggleMilestone = async (milestoneId: string) => {
     try {
-      const res = await axios.put(`http://localhost:5000/api/projects/${selectedProject._id}/milestones/${milestoneId}`);
+      const res = await api.put(`/api/projects/${selectedProject._id}/milestones/${milestoneId}`);
       setSelectedProject({ ...selectedProject, milestones: res.data });
     } catch (err) {
       console.error(err);
@@ -234,6 +243,7 @@ export default function WorkspacePage() {
                             {statusColumn !== 'done' && (
                               <button onClick={() => updateTaskStatus(task._id, 'done')} className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center hover:bg-green-200 text-green-700 transition-colors"><span className="material-symbols-outlined text-[16px]">check</span></button>
                             )}
+                            <button onClick={() => deleteTask(task._id)} className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center hover:bg-red-100 text-red-400 transition-colors"><span className="material-symbols-outlined text-[16px]">delete</span></button>
                           </div>
                         </div>
                       </div>

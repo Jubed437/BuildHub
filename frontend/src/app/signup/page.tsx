@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 import Link from 'next/link';
 import { toast, Toaster } from 'react-hot-toast';
@@ -19,7 +19,7 @@ export default function SignupPage() {
     e.preventDefault();
     try {
       const skills = skillsStr.split(',').map(s => s.trim()).filter(s => s);
-      const res = await axios.post('http://localhost:5000/api/auth/signup', { name, email, password, skills });
+      const res = await api.post('/api/auth/signup', { name, email, password, skills });
       login(res.data.user, res.data.token);
       toast.success('Account created successfully');
       router.push('/dashboard');
@@ -30,7 +30,6 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface-container-lowest p-6">
-      <Toaster />
       <div className="w-full max-w-lg bg-surface p-10 rounded-xl shadow-sm border border-surface-container-high relative overflow-hidden">
         
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary-fixed-dim rounded-full blur-3xl opacity-20 -mr-10 -mt-10"></div>

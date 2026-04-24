@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import Link from 'next/link';
 
 export default function RecommendationsMarquee() {
   const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/users/recommendations')
+    api.get('/api/users/recommendations')
       .then(res => setUsers(res.data))
       .catch(console.error);
   }, []);

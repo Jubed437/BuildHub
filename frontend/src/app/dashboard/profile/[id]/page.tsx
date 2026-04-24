@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 import { useParams } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
 export default function ProfilePage() {
   const { id } = useParams();
-  const { token } = useAuthStore();
+  const profileId = Array.isArray(id) ? id[0] : id;
+  const { user: authUser } = useAuthStore();
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeUser, setActiveUser] = useState<any>(null);
@@ -18,10 +20,15 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    if (!profileId) {
+      setLoading(false);
+      return;
+    }
+
     // Fetch both the viewed profile and the logged-in user at the same time
     Promise.all([
-      axios.get(`http://localhost:5000/api/users/profile/${id}`),
-      axios.get('http://localhost:5000/api/users/me')
+      api.get(`/api/users/profile/${profileId}`),
+      api.get('/api/users/me')
     ]).then(([profileRes, meRes]) => {
       setProfileData(profileRes.data);
       setActiveUser(meRes.data);
@@ -34,14 +41,17 @@ export default function ProfilePage() {
         portfolio: user.links?.portfolio || '',
         avatar: user.avatar || ''
       });
-    }).catch(console.error).finally(() => setLoading(false));
-  }, [id]);
+    }).catch((err) => {
+      console.error(err);
+      toast.error('Unable to load profile');
+    }).finally(() => setLoading(false));
+  }, [profileId]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert('File size must be less than 2MB');
+      if (file.size > 1 * 1024 * 1024) {
+        toast.error('Image must be under 1MB');
         return;
       }
       const reader = new FileReader();
@@ -54,10 +64,12 @@ export default function ProfilePage() {
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!profileId) return;
+
     setSaving(true);
     try {
       const links = { github: editForm.github, linkedin: editForm.linkedin, portfolio: editForm.portfolio };
-      const res = await axios.put(`http://localhost:5000/api/users/profile/${id}`, {
+      const res = await api.put(`/api/users/profile/${profileId}`, {
         bio: editForm.bio,
         skills: editForm.skills,
         links,
@@ -65,8 +77,10 @@ export default function ProfilePage() {
       });
       setProfileData({ ...profileData, user: res.data });
       setIsEditing(false);
-    } catch (err) {
+      toast.success('Profile updated');
+    } catch (err: any) {
       console.error(err);
+      toast.error(err?.response?.data?.msg || 'Unable to update profile');
     } finally {
       setSaving(false);
     }
@@ -76,6 +90,8 @@ export default function ProfilePage() {
   if (!profileData) return <div className="p-12 text-center">Profile not found.</div>;
 
   const { user, activeProjects } = profileData;
+  const activeUserId = activeUser?._id?.toString() || activeUser?.id || authUser?.id;
+  const canEditProfile = !!activeUserId && activeUserId.toString() === user._id.toString();
 
   return (
     <div className="flex-1 p-6 md:p-12 max-w-7xl mx-auto overflow-x-hidden">
@@ -110,10 +126,12 @@ export default function ProfilePage() {
           </div>
 
           <div className="flex flex-wrap gap-4">
-            <button className="bg-gradient-to-br from-primary to-primary-container text-surface-container-lowest px-8 py-3.5 rounded-full font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
-              Collaborate
-            </button>
-            {activeUser && activeUser._id === user._id && (
+            {!canEditProfile && (
+              <button className="bg-gradient-to-br from-primary to-primary-container text-surface-container-lowest px-8 py-3.5 rounded-full font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
+                Collaborate
+              </button>
+            )}
+            {canEditProfile && (
               <button onClick={() => setIsEditing(true)} className="bg-surface-container-high text-on-surface px-8 py-3.5 rounded-full font-bold hover:bg-surface-container-highest transition-colors flex items-center gap-2">
                 <span className="material-symbols-outlined text-sm">edit</span> Edit Profile
               </button>
@@ -226,7 +244,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-bold text-on-surface">Profile Picture (.jpg, .jpeg)</label>
+                  <label className="block text-sm font-bold text-on-surface">Profile Picture (.jpg, .jpeg, .png)</label>
                   <div className="flex items-center gap-4">
                     {editForm.avatar && (
                       <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-surface-container">
@@ -235,7 +253,7 @@ export default function ProfilePage() {
                     )}
                     <input
                       type="file"
-                      accept=".jpg,.jpeg"
+                      accept=".jpg,.jpeg,.png"
                       onChange={handleImageUpload}
                       className="w-full bg-surface-container-low border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none shadow-inner file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary-container cursor-pointer text-on-surface-variant flex-1"
                     />

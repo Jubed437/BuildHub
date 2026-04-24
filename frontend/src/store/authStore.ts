@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+const TOKEN_KEY = 'token';
+
 interface User {
   id: string;
   name: string;
@@ -18,14 +20,14 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
-  isAuthenticated: typeof window !== 'undefined' ? !!localStorage.getItem('token') : false,
+  token: typeof window !== 'undefined' ? sessionStorage.getItem(TOKEN_KEY) : null,
+  isAuthenticated: typeof window !== 'undefined' ? !!sessionStorage.getItem(TOKEN_KEY) : false,
   login: (user, token) => {
-    localStorage.setItem('token', token);
+    sessionStorage.setItem(TOKEN_KEY, token);
     set({ user, token, isAuthenticated: true });
   },
   logout: () => {
-    localStorage.removeItem('token');
+    sessionStorage.removeItem(TOKEN_KEY);
     set({ user: null, token: null, isAuthenticated: false });
   },
   updateUser: (user) => set({ user }),
