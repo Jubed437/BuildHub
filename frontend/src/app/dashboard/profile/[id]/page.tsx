@@ -5,6 +5,7 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 import { useParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import SkillBubbleSelector from '@/components/SkillBubbleSelector';
 
 export default function ProfilePage() {
   const { id } = useParams();
@@ -16,7 +17,7 @@ export default function ProfilePage() {
   
   // Edit state
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ bio: '', skills: '', github: '', linkedin: '', portfolio: '', avatar: '' });
+  const [editForm, setEditForm] = useState({ bio: '', skills: [] as string[], github: '', linkedin: '', portfolio: '', avatar: '' });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function ProfilePage() {
       const user = profileRes.data.user;
       setEditForm({
         bio: user.bio || '',
-        skills: user.skills ? user.skills.join(', ') : '',
+        skills: user.skills || [],
         github: user.links?.github || '',
         linkedin: user.links?.linkedin || '',
         portfolio: user.links?.portfolio || '',
@@ -233,13 +234,11 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-bold text-on-surface">Skills <span className="text-secondary font-medium tracking-widest uppercase text-[10px] ml-2">Comma Separated</span></label>
-                  <input
-                    type="text"
-                    value={editForm.skills}
-                    onChange={e => setEditForm({...editForm, skills: e.target.value})}
-                    className="w-full bg-surface-container-low border-none rounded-2xl p-5 text-sm focus:ring-2 focus:ring-primary/20 outline-none shadow-inner"
-                    placeholder="e.g. Next.js, Node.js, Python, Figma"
+                  <SkillBubbleSelector
+                    selectedSkills={editForm.skills}
+                    onChange={(skills) => setEditForm({ ...editForm, skills })}
+                    helperText="Choose from categories and related skills, or type your own if not listed."
+                    placeholder="Search and add skills"
                   />
                 </div>
 
