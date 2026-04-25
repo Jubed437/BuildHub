@@ -137,15 +137,15 @@ export default function SkillBubbleSelector({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 md:space-y-5">
       <div className="space-y-1">
         <label className="text-label-md uppercase tracking-wider text-secondary font-bold block">{label}</label>
-        <p className="text-xs text-on-surface-variant">{helperText}</p>
+        <p className="text-[11px] md:text-xs text-on-surface-variant leading-relaxed">{helperText}</p>
       </div>
 
-      <div className="space-y-2 bg-surface-container-low/50 rounded-xl p-3 border border-surface-container-high/60">
+      <div className="space-y-2 bg-surface-container-low/50 rounded-xl p-3 md:p-4 border border-surface-container-high/60">
         <div className="flex items-center justify-between">
-          <p className="text-xs uppercase tracking-wider text-secondary font-bold">Selected</p>
+          <p className="text-[11px] md:text-xs uppercase tracking-wider text-secondary font-bold">Selected</p>
           {selectedSkills.length > 0 && (
             <button
               type="button"
@@ -163,10 +163,10 @@ export default function SkillBubbleSelector({
                 key={`selected-${skill}`}
                 type="button"
                 onClick={() => removeSkill(skill)}
-                className="inline-flex min-w-[8.5rem] items-center justify-between px-3 py-1.5 rounded-full text-xs font-bold bg-primary-fixed text-on-primary-fixed border border-primary/30 hover:bg-primary hover:text-white transition-colors"
+                className="inline-flex w-full sm:w-auto min-w-0 sm:min-w-[8.5rem] items-center justify-between px-3 py-1.5 rounded-full text-xs font-bold bg-primary-fixed text-on-primary-fixed border border-primary/30 hover:bg-primary hover:text-white transition-colors"
                 title="Remove skill"
               >
-                <span className="truncate pr-2">{skill}</span>
+                <span className="truncate pr-2 max-w-[10rem] sm:max-w-none">{skill}</span>
                 <span
                   aria-hidden="true"
                   className="ml-2 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/25"
@@ -191,7 +191,7 @@ export default function SkillBubbleSelector({
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleQueryKeyDown}
           placeholder={placeholder}
-          className="w-full bg-surface-container-low focus:bg-surface-container-lowest rounded-DEFAULT px-4 py-3 outline-none focus:ring-1 focus:ring-primary/30 transition-all font-sans"
+          className="w-full bg-surface-container-low focus:bg-surface-container-lowest rounded-DEFAULT px-4 py-3 text-sm md:text-base outline-none focus:ring-1 focus:ring-primary/30 transition-all font-sans"
         />
 
         {(filteredSuggestions.length > 0 || canAddCustom) && (
@@ -201,7 +201,7 @@ export default function SkillBubbleSelector({
                 key={`suggestion-${skill}`}
                 type="button"
                 onClick={() => addSkill(skill)}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold bg-surface-container text-on-surface border border-surface-container-high hover:bg-surface-container-high transition-colors"
+                className="px-3 py-1.5 rounded-full text-[11px] md:text-xs font-semibold bg-surface-container text-on-surface border border-surface-container-high hover:bg-surface-container-high transition-colors"
               >
                 {skill}
               </button>
@@ -221,14 +221,14 @@ export default function SkillBubbleSelector({
       </div>
 
       <div className="space-y-2">
-        <p className="text-xs uppercase tracking-wider text-secondary font-bold">Popular Skills</p>
+        <p className="text-[11px] md:text-xs uppercase tracking-wider text-secondary font-bold">Popular Skills</p>
         <div className="flex flex-wrap gap-2">
           {visiblePopularSkills.map((skill) => (
             <button
               key={`popular-${skill}`}
               type="button"
               onClick={() => addSkill(skill)}
-              className="px-3 py-1.5 rounded-full text-xs font-semibold bg-surface-container text-on-surface border border-surface-container-high hover:bg-surface-container-high transition-colors"
+              className="px-3 py-1.5 rounded-full text-[11px] md:text-xs font-semibold bg-surface-container text-on-surface border border-surface-container-high hover:bg-surface-container-high transition-colors"
             >
               {skill}
             </button>
@@ -247,14 +247,14 @@ export default function SkillBubbleSelector({
 
       {relatedSkills.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-wider text-secondary font-bold">Related to {anchorSkill}</p>
+          <p className="text-[11px] md:text-xs uppercase tracking-wider text-secondary font-bold">Related to {anchorSkill}</p>
           <div className="flex flex-wrap gap-2">
             {relatedSkills.map((skill) => (
               <button
                 key={`related-${skill}`}
                 type="button"
                 onClick={() => addSkill(skill)}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold bg-primary-fixed/70 text-on-primary-fixed border border-primary/20 hover:bg-primary-fixed transition-colors"
+                className="px-3 py-1.5 rounded-full text-[11px] md:text-xs font-semibold bg-primary-fixed/70 text-on-primary-fixed border border-primary/20 hover:bg-primary-fixed transition-colors"
               >
                 {skill}
               </button>

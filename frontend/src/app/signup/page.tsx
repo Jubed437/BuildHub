@@ -66,14 +66,14 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-container-lowest p-6">
-      <div className="w-full max-w-lg bg-surface p-10 rounded-xl shadow-sm border border-surface-container-high relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-surface-container-lowest px-4 py-6 sm:p-6">
+      <div className="w-full max-w-lg bg-surface p-6 sm:p-8 md:p-10 rounded-2xl shadow-sm border border-surface-container-high relative overflow-hidden">
         
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary-fixed-dim rounded-full blur-3xl opacity-20 -mr-10 -mt-10"></div>
         
         <div className="relative z-10">
-          <h1 className="text-display-lg font-lexend text-primary mb-2 tracking-tight">Join the Archive</h1>
-          <p className="text-body-lg text-secondary mb-8">Create your profile and start collaborating on campus projects.</p>
+          <h1 className="text-4xl sm:text-display-lg font-lexend text-primary mb-2 tracking-tight">Join the Archive</h1>
+          <p className="text-sm sm:text-body-lg text-secondary mb-6 sm:mb-8 leading-relaxed">Create your profile and start collaborating on campus projects.</p>
           
           <form onSubmit={handleSignup} className="space-y-5">
             <div className="space-y-2">
@@ -112,7 +112,7 @@ export default function SignupPage() {
             <button 
               type="submit" 
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-br from-primary to-primary-container text-surface-container-lowest rounded-full py-[1.2rem] px-[3.5rem] font-bold tracking-wide hover:opacity-90 transition-opacity mt-6 font-lexend"
+              className="w-full bg-gradient-to-br from-primary to-primary-container text-surface-container-lowest rounded-full py-4 px-6 sm:py-[1.2rem] sm:px-[3.5rem] font-bold tracking-wide hover:opacity-90 transition-opacity mt-6 font-lexend"
             >
               {isSubmitting ? 'Creating Account...' : 'Sign Up'}
             </button>
@@ -125,11 +125,11 @@ export default function SignupPage() {
       </div>
 
       {showSkillsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface/80 backdrop-blur-sm">
-          <div className="w-full max-w-2xl bg-surface rounded-2xl border border-surface-container-high shadow-2xl p-6 md:p-8">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-surface/80 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-surface rounded-t-3xl sm:rounded-2xl border border-surface-container-high shadow-2xl p-5 sm:p-6 md:p-8">
             <div className="mb-5">
-              <h2 className="text-2xl font-lexend font-bold text-on-surface">One More Step: Pick Your Skills</h2>
-              <p className="text-sm text-on-surface-variant mt-1">
+              <h2 className="text-xl sm:text-2xl font-lexend font-bold text-on-surface">One More Step: Pick Your Skills</h2>
+              <p className="text-sm text-on-surface-variant mt-1 leading-relaxed">
                 This helps us recommend better collaborators and projects. You can skip and update later.
               </p>
             </div>
@@ -142,11 +142,11 @@ export default function SignupPage() {
               placeholder="Search skills or add your own"
             />
 
-            <div className="mt-6 flex items-center justify-end gap-3">
+            <div className="mt-6 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={handleSkipSkills}
-                className="px-5 py-2.5 rounded-full text-sm font-semibold text-on-surface-variant hover:text-on-surface transition-colors"
+                className="px-5 py-3 rounded-full text-sm font-semibold text-on-surface-variant hover:text-on-surface transition-colors w-full sm:w-auto"
               >
                 Skip for now
               </button>
@@ -154,7 +154,7 @@ export default function SignupPage() {
                 type="button"
                 onClick={handleSaveSkillsAndContinue}
                 disabled={isSavingSkills}
-                className="px-6 py-2.5 rounded-full text-sm font-bold text-surface-container-lowest bg-gradient-to-br from-primary to-primary-container disabled:opacity-70"
+                className="px-6 py-3 rounded-full text-sm font-bold text-surface-container-lowest bg-gradient-to-br from-primary to-primary-container disabled:opacity-70 w-full sm:w-auto"
               >
                 {isSavingSkills ? 'Saving...' : 'Save & Continue'}
               </button>

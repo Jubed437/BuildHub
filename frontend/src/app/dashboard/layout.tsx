@@ -13,8 +13,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const [activeUser, setActiveUser] = useState<any>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
+    setMobileNavOpen(false);
+
     const validateSession = async () => {
       if (!token) {
         router.replace('/login');
@@ -47,10 +50,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return <div className="min-h-screen flex items-center justify-center text-on-surface-variant">Checking session...</div>;
   }
 
+  const navLinkClass = (isActive: boolean) =>
+    `flex items-center gap-3 px-4 py-3 rounded-full transition-all duration-300 ease-in-out ${isActive ? 'bg-primary-fixed-dim/30 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`;
+
   return (
     <div className="bg-background font-sans text-on-surface min-h-screen flex">
+      {mobileNavOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          onClick={() => setMobileNavOpen(false)}
+          className="fixed inset-0 z-40 bg-black/30 md:hidden"
+        />
+      )}
+
       {/* Sidebar */}
-      <nav className="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container-lowest font-lexend font-medium text-base p-4 gap-2 z-50 shadow-sm border-r border-surface-container">
+      <nav className={`fixed inset-y-0 left-0 z-50 flex flex-col w-72 max-w-[85vw] bg-surface-container-lowest font-lexend font-medium text-base p-4 gap-2 shadow-xl border-r border-surface-container transform transition-transform duration-300 ${mobileNavOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
         <div className="mb-8 px-4 flex items-center gap-3 mt-4">
           <div className="w-10 h-10 bg-primary-container rounded-full flex items-center justify-center text-surface-container-lowest">
             <span className="font-bold text-xl">C</span>
@@ -62,27 +77,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         <div className="space-y-1">
-          <Link href="/dashboard" className={`flex items-center gap-3 px-4 py-3 rounded-full transition-all duration-300 ease-in-out ${pathname === '/dashboard' ? 'bg-primary-fixed-dim/30 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+          <Link href="/dashboard" className={navLinkClass(pathname === '/dashboard')}>
             <span className="material-symbols-outlined">dashboard</span>
             <span>Dashboard</span>
           </Link>
-          <Link href="/dashboard/workspace" className={`flex items-center gap-3 px-4 py-3 rounded-full transition-all duration-300 ease-in-out ${pathname.includes('/workspace') ? 'bg-primary-fixed-dim/30 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+          <Link href="/dashboard/workspace" className={navLinkClass(pathname.includes('/workspace'))}>
             <span className="material-symbols-outlined">workspaces</span>
             <span>Workspace</span>
           </Link>
-          <Link href="/dashboard/find" className={`flex items-center gap-3 px-4 py-3 rounded-full transition-all duration-300 ease-in-out ${pathname === '/dashboard/find' ? 'bg-primary-fixed-dim/30 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+          <Link href="/dashboard/find" className={navLinkClass(pathname === '/dashboard/find')}>
             <span className="material-symbols-outlined">person_search</span>
             <span>Find People</span>
           </Link>
-          <Link href="/dashboard/projects" className={`flex items-center gap-3 px-4 py-3 rounded-full transition-all duration-300 ease-in-out ${pathname.includes('/projects') ? 'bg-primary-fixed-dim/30 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+          <Link href="/dashboard/projects" className={navLinkClass(pathname.includes('/projects'))}>
             <span className="material-symbols-outlined">folder_shared</span>
             <span>My Projects</span>
           </Link>
-          <Link href="/dashboard/leaderboard" className={`flex items-center gap-3 px-4 py-3 rounded-full transition-all duration-300 ease-in-out ${pathname === '/dashboard/leaderboard' ? 'bg-primary-fixed-dim/30 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+          <Link href="/dashboard/leaderboard" className={navLinkClass(pathname === '/dashboard/leaderboard')}>
             <span className="material-symbols-outlined">leaderboard</span>
             <span>Scoreboard</span>
           </Link>
-          <Link href={`/dashboard/profile/${activeUser?._id || ''}`} className={`flex items-center gap-3 px-4 py-3 rounded-full transition-all duration-300 ease-in-out ${pathname.includes('/profile') ? 'bg-primary-fixed-dim/30 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+          <Link href={`/dashboard/profile/${activeUser?._id || ''}`} className={navLinkClass(pathname.includes('/profile'))}>
             <span className="material-symbols-outlined">person</span>
             <span>Profile</span>
           </Link>
@@ -96,14 +111,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </nav>
 
       {/* Main Content */}
-      <main className="md:ml-64 flex-1 min-w-0 w-full md:w-[calc(100%-16rem)] min-h-screen overflow-x-hidden">
+      <main className="flex-1 min-w-0 w-full md:ml-72 md:w-[calc(100%-18rem)] min-h-screen overflow-x-hidden">
         {/* Top App Bar */}
-        <header className="w-full h-16 sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-surface-container flex items-center justify-end px-6">
-          <div className="flex items-center gap-2">
+        <header className="w-full h-16 sticky top-0 z-40 bg-surface/90 backdrop-blur-xl border-b border-surface-container flex items-center justify-between md:justify-end px-4 sm:px-6">
+          <button
+            type="button"
+            aria-label="Open navigation"
+            onClick={() => setMobileNavOpen(true)}
+            className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low border border-surface-container-high text-on-surface"
+          >
+            <span className="material-symbols-outlined">menu</span>
+          </button>
+
+          <div className="flex items-center gap-2 ml-auto">
             <NotificationBell />
-            <div className="h-8 w-[1px] bg-surface-container-high mx-2"></div>
+            <div className="h-8 w-[1px] bg-surface-container-high mx-2 hidden sm:block"></div>
             <div className="flex items-center gap-3 pl-2">
-              <div className="flex flex-col text-right">
+              <div className="hidden sm:flex flex-col text-right">
                 <span className="text-sm font-lexend font-semibold text-primary">{activeUser?.name ?? 'Guest'}</span>
                 <span className="text-xs text-secondary">{activeUser?.skills?.slice(0, 2).join(', ') ?? 'Browsing'}</span>
               </div>
