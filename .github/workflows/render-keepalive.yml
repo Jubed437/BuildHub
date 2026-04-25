@@ -18,6 +18,33 @@ jobs:
 
       - name: Ping backend health endpoint
         run: |
-          set -e
-          curl -fsS --max-time 20 "${{ secrets.BACKEND_HEALTHCHECK_URL }}" > /dev/null
-          echo "Backend ping succeeded"
+          set -euo pipefail
+
+          URL="${{ secrets.BACKEND_HEALTHCHECK_URL }}"
+          RESPONSE_FILE="/tmp/keepalive-response.txt"
+
+          ping_url () {
+            local target="$1"
+            local code
+            code=$(curl -sS -o "$RESPONSE_FILE" -w "%{http_code}" --max-time 20 "$target" || true)
+            echo "$code"
+          }
+
+          HTTP_CODE=$(ping_url "$URL")
+
+          # If someone saved only the service base URL, try /api/health automatically.
+          if [ "$HTTP_CODE" = "404" ] && [[ "$URL" != */api/health ]]; then
+            FALLBACK_URL="${URL%/}/api/health"
+            echo "Primary URL returned 404. Trying fallback path /api/health"
+            HTTP_CODE=$(ping_url "$FALLBACK_URL")
+            URL="$FALLBACK_URL"
+          fi
+
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "Backend ping failed with HTTP $HTTP_CODE"
+            echo "Response preview:"
+            head -c 300 "$RESPONSE_FILE" || true
+            exit 1
+          fi
+
+          echo "Backend ping succeeded with HTTP $HTTP_CODE"
